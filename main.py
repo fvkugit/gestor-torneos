@@ -498,9 +498,6 @@ class App(customtkinter.CTk):
         self.mostrarEquipos()
         print("Button pressed")
 
-    def change_appearance_mode(self, new_appearance_mode):
-        customtkinter.set_appearance_mode(new_appearance_mode)
-
     def on_closing(self, event=0):
         self.destroy()
 
