@@ -57,8 +57,9 @@ class App(customtkinter.CTk):
         guardar = customtkinter.CTkButton(master=window, text="AGREGAR", border_width=2,
                                                 corner_radius=10, compound="bottom", border_color="#42AB49", fg_color=("gray84", "gray25"),
                                                 hover_color="#53AB5B",
-                                                command=lambda x=id:self.agregar_jugador_aequipo(x, entry_jugador.get()))
+                                                command=lambda x=id:self.agregar_jugador_a_equipo(x, entry_jugador.get()))
         guardar.grid(row=2, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
+
 
 
     def crear_jugador(self):
@@ -663,6 +664,7 @@ class App(customtkinter.CTk):
         # ============ torneos h ============
 
         rowCounter = 1
+        rowTorneos = 1
         idequipo = id
         torneosLista = self.bd.execute(f"SELECT id_torneo, nombre, tipo FROM torneos_equipos JOIN torneos USING (id_torneo) WHERE id_equipo = {idequipo}")
         # asistente = self.con.cursor()
@@ -670,7 +672,7 @@ class App(customtkinter.CTk):
         for torneo in torneosLista:
             # ============ tabla fila ============
             self.frame_info = customtkinter.CTkFrame(master=self.contenido)
-            self.frame_info.grid(row=rowCounter, column=0, columnspan=3, rowspan=1, pady=(20, 10), padx=20, sticky="ew")
+            self.frame_info.grid(row=rowTorneos, column=0, columnspan=3, rowspan=1, pady=(20, 10), padx=20, sticky="ew")
             self.frame_info.columnconfigure((0,1,2,3,4), weight=1)
 
             self.label_1 = customtkinter.CTkLabel(master=self.frame_info,
@@ -690,7 +692,7 @@ class App(customtkinter.CTk):
                                                     command=self.boton_torneos)
             self.label_3.grid(row=0, column=4, pady=10, padx=20)
 
-            rowCounter += 1
+            rowTorneos += 1
             # ============ / tabla fila ============
 
         # ============ header ============
@@ -721,11 +723,13 @@ class App(customtkinter.CTk):
         idequipo = id
         jugadoresLista = self.bd.execute(f"SELECT id_jugador, nombre, fecha_nacimiento FROM equipos_jugadores JOIN jugadores USING (id_jugador) WHERE id_equipo = {idequipo}")
         # asistente = self.con.cursor()
+        rowJugadores = 1
 
         for jugador in jugadoresLista:
+            print(rowJugadores)
             # ============ tabla fila ============
             self.fila = customtkinter.CTkFrame(master=self.contenido)
-            self.fila.grid(row=1, column=1, pady=(20, 0), padx=20, sticky="nsew")
+            self.fila.grid(row=rowJugadores, column=1, pady=(20, 0), padx=20, sticky="nsew")
             self.fila.columnconfigure(2, weight=1)
 
             self.hlabel_1 = customtkinter.CTkLabel(master=self.fila,
@@ -747,11 +751,13 @@ class App(customtkinter.CTk):
                                                         justify="center")  # font name and size in px
             self.hlabel_3.grid(row=1, column=2, pady=10, padx=20, sticky="ew")
 
-            rowCounter += 1
+            rowJugadores += 1
             # ============ / tabla fila ============
 
+        rowCounter = max(rowJugadores, rowTorneos)
+
         self.frame_info = customtkinter.CTkFrame(master=self.contenido)
-        self.frame_info.grid(row=rowCounter+1, column=0, pady=(20, 0), padx=20, sticky="nsew")
+        self.frame_info.grid(row=rowTorneos, column=0, pady=(20, 0), padx=20, sticky="nsew")
         self.frame_info.rowconfigure(0, weight=1)
         self.frame_info.columnconfigure(0, weight=1)
         self.button_eliminar = customtkinter.CTkButton(master=self.frame_info, text="Agregar torneo", border_width=2,
@@ -760,7 +766,7 @@ class App(customtkinter.CTk):
         self.button_eliminar.grid(row=0, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
 
         self.frame_info = customtkinter.CTkFrame(master=self.contenido)
-        self.frame_info.grid(row=rowCounter+1, column=1, pady=(20, 0), padx=20, sticky="nsew")
+        self.frame_info.grid(row=rowJugadores, column=1, pady=(20, 0), padx=20, sticky="nsew")
         self.frame_info.rowconfigure(0, weight=1)
         self.frame_info.columnconfigure(0, weight=1)
         self.button_eliminar = customtkinter.CTkButton(master=self.frame_info, text="Agregar jugador", border_width=2,
@@ -835,8 +841,12 @@ class App(customtkinter.CTk):
         self.con.commit()
         self.mostrarTorneos()
 
-    def agregar_jugador_aequipo(self,ide, idj):
-        print(ide, idj)
+    def agregar_jugador_a_equipo(self,idEquipo,idj):
+        idJugador = idj[idj.find("[")+1:idj.find("]")]
+        query = (f"INSERT INTO equipos_jugadores VALUES ('{idEquipo}', '{idJugador}', NULL)")
+        self.bd.execute(query)
+        self.con.commit()
+        self.gestionarEquipo(idEquipo)
 
 if __name__ == "__main__":
     app = App()
