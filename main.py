@@ -1,10 +1,10 @@
 import tkinter
 import tkinter.messagebox
 import customtkinter
-from PIL import Image, ImageTk
 import os
-from tkinter import Canvas
 import sqlite3
+from PIL import Image, ImageTk
+from tkinter import Canvas, Menu
 from datetime import date, datetime
 
 # DOCUMENTATION CUSTOM TKINTER FROM GITHUB
@@ -18,21 +18,50 @@ class App(customtkinter.CTk):
 
     WIDTH = 1280
     HEIGHT = 720
+    global bd_name
+    bd_name = "gestor.db"
 
     def __init__(self):
         super().__init__()
 
+        self.barraMenu = Menu(self)
         self.title("Gestor de Torneos")
         self.iconbitmap("icon.ico")
         self.geometry(f"{App.WIDTH}x{App.HEIGHT}")
         self.resizable(False, False)
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.config(menu=self.barraMenu)
         self.mostrarBase()
-        self.con = sqlite3.connect("gestor.db")
+        self.con = sqlite3.connect(bd_name)
         self.bd = self.con.cursor()
-        
+
+        configMenu = Menu(self.barraMenu, tearoff=0)
+        configMenu.add_command(label="Base de datos", command=self.opcion_bd)
+        configMenu.add_command(label="Creditos", command=self.opcion_creditos)
+        self.barraMenu.add_cascade(label="Opciones", menu=configMenu)
+
+    def opcion_bd(self):
+        nuevoNombre = customtkinter.CTkInputDialog(master=self, text="Ingresa el nombre de la base de datos:", title="Configuracion")
+        bd_name = nuevoNombre.get_input()
+        self.con.close()
+        self.con = sqlite3.connect(bd_name)
+        self.bd = self.con.cursor()
+    def opcion_creditos(self):
+        tkinter.messagebox.showinfo(title="Creditos", message="Barral Facundo\nTrabajo Final Programación\nTerciario Urquiza DS 3ro2da")
+
+
     def agregar_jugador(self, id):
-        window = customtkinter.CTkToplevel(self)
+        jLista = self.bd.execute(f"SELECT * FROM jugadores WHERE id_jugador NOT IN (SELECT id_jugador FROM equipos_jugadores WHERE id_equipo = '{id}')")
+        lista = []
+        for j in jLista:
+            lista.append("["+str(j[0])+"] " + j[1])
+        
+        if (len(lista) == 0):
+            tkinter.messagebox.showerror(title="Error", message="No quedan jugadores disponibles para este equipo.")
+            return
+
+        self.window = customtkinter.CTkToplevel(self)
+        window = self.window
         window.title("Nuevo jugador")
         window.iconbitmap("icon.ico")
         window.geometry("500x200")
@@ -43,12 +72,10 @@ class App(customtkinter.CTk):
 
         window.columnconfigure(1, weight=1)
 
-        label_msg = customtkinter.CTkLabel(window, text="ELIGE EL JUGADOR")
+        self.window.label_msg = customtkinter.CTkLabel(window, text="ELIGE EL JUGADOR")
+        label_msg = self.window.label_msg
         label_msg.grid(column=0, row=0, padx=20, pady=20, columnspan=2)
-        jLista = self.bd.execute(f"SELECT * FROM jugadores")
-        lista = []
-        for j in jLista:
-            lista.append("["+str(j[0])+"] " + j[1])
+        
 
         entry_jugador = customtkinter.CTkOptionMenu(master=window, width=135, values = lista )
         entry_jugador.grid(column=0, columnspan=2, row=1, padx=5, pady=20)
@@ -58,6 +85,43 @@ class App(customtkinter.CTk):
                                                 corner_radius=10, compound="bottom", border_color="#42AB49", fg_color=("gray84", "gray25"),
                                                 hover_color="#53AB5B",
                                                 command=lambda x=id:self.agregar_jugador_a_equipo(x, entry_jugador.get()))
+        guardar.grid(row=2, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
+
+    def agregar_torneo(self, id):
+        tLista = self.bd.execute(f"SELECT * FROM torneos WHERE id_torneo NOT IN (SELECT id_torneo FROM torneos_equipos WHERE id_equipo = '{id}')")
+        lista = []
+        for j in tLista:
+            lista.append("["+str(j[0])+"] " + j[1])
+
+        if (len(lista) == 0):
+            tkinter.messagebox.showerror(title="Error", message="No quedan torneos disponibles para este equipo.")
+            return
+
+        self.window = customtkinter.CTkToplevel(self)
+        window = self.window
+        window.title("Nuevo torneo")
+        window.iconbitmap("icon.ico")
+        window.geometry("500x200")
+
+        # Custom TKinter resizable method doesnt work.
+        window.maxsize(500,200)
+        window.minsize(500,200)
+
+        window.columnconfigure(1, weight=1)
+
+        self.window.label_msg = customtkinter.CTkLabel(window, text="ELIGE EL TORNEO")
+        label_msg = self.window.label_msg
+        label_msg.grid(column=0, row=0, padx=20, pady=20, columnspan=2)
+        
+
+        entry_torneo = customtkinter.CTkOptionMenu(master=window, width=135, values = lista )
+        entry_torneo.grid(column=0, columnspan=2, row=1, padx=5, pady=20)
+
+        
+        guardar = customtkinter.CTkButton(master=window, text="AGREGAR", border_width=2,
+                                                corner_radius=10, compound="bottom", border_color="#42AB49", fg_color=("gray84", "gray25"),
+                                                hover_color="#53AB5B",
+                                                command=lambda x=id:self.agregar_torneo_a_equipo(x, entry_torneo.get()))
         guardar.grid(row=2, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
 
 
@@ -359,7 +423,7 @@ class App(customtkinter.CTk):
         self.header = customtkinter.CTkFrame(master=self.contenido)
         self.header.grid(row=0, column=0, columnspan=3, rowspan=1, pady=(20, 0), padx=20, sticky="nsew")
         self.header.rowconfigure(0, weight=1)
-        self.header.columnconfigure((0,1,2,3,4), weight=1)
+        self.header.columnconfigure(0, weight=1)
 
         self.hlabel_1 = customtkinter.CTkLabel(master=self.header,
                                                     text="Datos",
@@ -371,7 +435,7 @@ class App(customtkinter.CTk):
                                                     text="En curso",
                                                     text_font=("Roboto Medium", -16),
                                                     anchor="w",
-                                                    justify="left") 
+                                                    justify="center") 
         self.hlabel_2.grid(row=0, column=1, pady=10, padx=20, sticky="w")
         self.hlabel_3 = customtkinter.CTkLabel(master=self.header,
                                                     text="Tipo",
@@ -393,10 +457,10 @@ class App(customtkinter.CTk):
             # ============ tabla fila ============
             self.frame_info = customtkinter.CTkFrame(master=self.contenido)
             self.frame_info.grid(row=rowCount, column=0, columnspan=3, rowspan=1, pady=(20, 10), padx=20, sticky="ew")
-            self.frame_info.columnconfigure((0,1,2,3,4), weight=1)
+            self.frame_info.columnconfigure(0, weight=1)
 
             self.label_1 = customtkinter.CTkLabel(master=self.frame_info,
-                                                        text=str(t[1])+"\n"+str(t[2])+"\nMaximo: "+str(t[4])+" equipos",
+                                                        text=str(t[1])+"\nMaximo: "+str(t[4])+" equipos",
                                                         text_font=("Roboto Medium", -16),
                                                         anchor="w",
                                                         justify="left")  # font name and size in px
@@ -406,12 +470,12 @@ class App(customtkinter.CTk):
                                                         text_font=("Roboto Medium", -16),
                                                         anchor="w",
                                                         justify="center")  # font name and size in px
-            self.label_2.grid(row=0, column=1, pady=10, padx=20, sticky="w")
+            self.label_2.grid(row=0, column=1, pady=10, padx=20, sticky="nsew")
             self.label_3 = customtkinter.CTkLabel(master=self.frame_info,
                                                         text=t[3],
                                                         text_font=("Roboto Medium", -16),
                                                         anchor="w",
-                                                        justify="left")  # font name and size in px
+                                                        justify="center")  # font name and size in px
             self.label_3.grid(row=0, column=3, pady=10, padx=20, sticky="w")
             self.label_4 = customtkinter.CTkButton(master=self.frame_info,
                                                     text="Gestionar",
@@ -425,11 +489,17 @@ class App(customtkinter.CTk):
         # ============ lateral derecho ============
 
 
-        self.button_agregar = customtkinter.CTkButton(master=self.contenido, image=self.agregar_torneo_imagen, text="NUEVO TORNEO", width=130, height=100, border_width=2,
+        self.frame_info = customtkinter.CTkFrame(master=self.contenido)
+        self.frame_info.grid(row=rowCount+1, column=0, columnspan=1, rowspan=2, pady=(20, 0), padx=20, sticky="nsew")
+
+        # configure grid layout (1x1)
+        self.frame_info.rowconfigure(0, weight=1)
+        self.frame_info.columnconfigure(0, weight=1)
+
+        self.button_agregar = customtkinter.CTkButton(master=self.frame_info, image=self.agregar_torneo_imagen, text="Agregar nuevo torneo", border_width=2,
                                                 corner_radius=10, compound="bottom", border_color="#42AB49", fg_color=("gray84", "gray25"),
                                                 hover_color="#53AB5B", command=self.crear_torneo)
-        self.button_agregar.grid(row=0, column=4, columnspan=1, padx=20, pady=20, sticky="nesw")
-       
+        self.button_agregar.grid(row=0, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
 
 
 
@@ -580,7 +650,6 @@ class App(customtkinter.CTk):
         self.equipo_imagen1 = self.load_image("/equipo-default.png", 55)
         # 0=ID, 1=NOMBRE, 2=FECHA NAC, 3=ALTURA
         for equipo in equiposLista:
-            print(rowCounter)
             # ============ fila ============
             self.frame_info = customtkinter.CTkFrame(master=self.contenido)
             self.frame_info.grid(row=rowCounter, column=0, columnspan=2, rowspan=1, pady=(20, 0), padx=20, sticky="nsew")
@@ -672,8 +741,9 @@ class App(customtkinter.CTk):
         for torneo in torneosLista:
             # ============ tabla fila ============
             self.frame_info = customtkinter.CTkFrame(master=self.contenido)
-            self.frame_info.grid(row=rowTorneos, column=0, columnspan=3, rowspan=1, pady=(20, 10), padx=20, sticky="ew")
-            self.frame_info.columnconfigure((0,1,2,3,4), weight=1)
+            self.frame_info.grid(row=rowTorneos, column=0, columnspan=1, rowspan=1, pady=(20, 0), padx=20, sticky="nsew")
+            self.frame_info.columnconfigure(4, weight=1)
+
 
             self.label_1 = customtkinter.CTkLabel(master=self.frame_info,
                                                         text=torneo[1],
@@ -688,8 +758,8 @@ class App(customtkinter.CTk):
                                                         justify="center")  # font name and size in px
             self.label_2.grid(row=0, column=1, pady=10, padx=20, sticky="w")
             self.label_3 = customtkinter.CTkButton(master=self.frame_info,
-                                                    text="Gestionar",
-                                                    command=self.boton_torneos)
+                                                    text="Eliminar",
+                                                    command=lambda id=torneo[0]:self.eliminar_torneo_a_equipo(id, idequipo))
             self.label_3.grid(row=0, column=4, pady=10, padx=20)
 
             rowTorneos += 1
@@ -726,7 +796,6 @@ class App(customtkinter.CTk):
         rowJugadores = 1
 
         for jugador in jugadoresLista:
-            print(rowJugadores)
             # ============ tabla fila ============
             self.fila = customtkinter.CTkFrame(master=self.contenido)
             self.fila.grid(row=rowJugadores, column=1, pady=(20, 0), padx=20, sticky="nsew")
@@ -762,7 +831,7 @@ class App(customtkinter.CTk):
         self.frame_info.columnconfigure(0, weight=1)
         self.button_eliminar = customtkinter.CTkButton(master=self.frame_info, text="Agregar torneo", border_width=2,
                                                 corner_radius=10, compound="bottom", border_color="#42AB49", fg_color=("gray84", "gray25"),
-                                                hover_color="#53AB5B", command=lambda x=id:self.eliminar_equipo(x))
+                                                hover_color="#53AB5B", command=lambda x=id:self.agregar_torneo(x))
         self.button_eliminar.grid(row=0, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
 
         self.frame_info = customtkinter.CTkFrame(master=self.contenido)
@@ -818,6 +887,7 @@ class App(customtkinter.CTk):
         self.mostrarJugadores()
         
     def eliminar_jugador(self, id):
+        if not tkinter.messagebox.askyesno(title="Confirmar acción", message="Seguro deseas eliminar este jugador?"):return
         query = (f"DELETE FROM jugadores WHERE id_jugador = {id}")
         self.bd.execute(query)
         self.con.commit()
@@ -830,20 +900,43 @@ class App(customtkinter.CTk):
         self.mostrarEquipos()
 
     def eliminar_equipo(self, id):
+        if not tkinter.messagebox.askyesno(title="Confirmar acción", message="Seguro deseas eliminar este equipo?"):return
         query = (f"DELETE FROM equipos WHERE id_equipo = {id}")
         self.bd.execute(query)
         self.con.commit()
         self.mostrarEquipos()
 
     def guardar_torneo(self, nombre, descripcion, tipo, limite):
-        query = (f"INSERT INTO torneos VALUES (NULL, '{nombre}', '{descripcion}', '{tipo}', '{limite}', NULL)")
+        query = (f"INSERT INTO torneos VALUES (NULL, '{nombre}', '{descripcion}', '{tipo}', '{limite}', DATE('now'))")
         self.bd.execute(query)
         self.con.commit()
         self.mostrarTorneos()
 
     def agregar_jugador_a_equipo(self,idEquipo,idj):
         idJugador = idj[idj.find("[")+1:idj.find("]")]
-        query = (f"INSERT INTO equipos_jugadores VALUES ('{idEquipo}', '{idJugador}', NULL)")
+        query = (f"INSERT INTO equipos_jugadores VALUES ('{idEquipo}', '{idJugador}', DATE('now'))")
+        try:
+            self.bd.execute(query)
+            self.con.commit()
+            self.window.destroy()
+        except sqlite3.IntegrityError as e:
+            self.window.label_msg.configure(text_color="red",text="Error: El jugador ya se encuentra en el equipo")
+        self.gestionarEquipo(idEquipo)
+    
+    def agregar_torneo_a_equipo(self, idEquipo, idt):
+        idTorneo = idt[idt.find("[")+1:idt.find("]")]
+        query = (f"INSERT INTO torneos_equipos VALUES ('{idTorneo}', '{idEquipo}', DATE('now'))")
+        try:
+            self.bd.execute(query)
+            self.con.commit()
+            self.window.destroy()
+        except sqlite3.IntegrityError as e:
+            self.window.label_msg.configure(text_color="red",text="Error: El torneo ya se encuentra en el equipo")
+        self.gestionarEquipo(idEquipo)
+
+    def eliminar_torneo_a_equipo(self, idTorneo, idEquipo):
+        if not tkinter.messagebox.askyesno(title="Confirmar acción", message="Seguro deseas eliminar el equipo de este torneo?"):return
+        query = (f"DELETE FROM torneos_equipos WHERE id_torneo = '{idTorneo}' AND id_equipo = '{idEquipo}'")
         self.bd.execute(query)
         self.con.commit()
         self.gestionarEquipo(idEquipo)
