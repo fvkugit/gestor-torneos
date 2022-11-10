@@ -530,7 +530,7 @@ class App(customtkinter.CTk):
         self.hlabel_4.grid(row=0, column=4, pady=10, padx=20, sticky="ew")
         # ============ / tabla header ============
 
-        torneosLista = self.bd.execute(f"SELECT * FROM torneos")
+        torneosLista = self.bd.execute(f"SELECT t.*, count(p.id_partido) FROM torneos t LEFT JOIN partidos p USING (id_torneo) GROUP BY id_torneo")
         rowCount = 1
         for t in torneosLista:
             # ============ tabla fila ============
@@ -545,7 +545,7 @@ class App(customtkinter.CTk):
                                                         justify="left")  # font name and size in px
             self.label_1.grid(row=0, column=0, pady=10, padx=20, sticky="w")
             self.label_2 = customtkinter.CTkLabel(master=self.frame_info,
-                                                        text="No",
+                                                        text=t[6] > 0 and "Si" or "No",
                                                         text_font=("Roboto Medium", -16),
                                                         anchor="w",
                                                         justify="center")  # font name and size in px
@@ -1138,6 +1138,14 @@ class App(customtkinter.CTk):
 
                 rowTabla += 1
                 # ============ / tabla fila ============
+            self.frame_info = customtkinter.CTkFrame(master=self.contenido)
+            self.frame_info.grid(row=rowTabla, column=0, pady=(20, 0), padx=20, sticky="nsew", columnspan=2)
+            self.frame_info.rowconfigure(0, weight=1)
+            self.frame_info.columnconfigure(0, weight=1)
+            self.button_eliminar = customtkinter.CTkButton(master=self.frame_info, text="Eliminar torneo", border_width=2,
+                                                    corner_radius=10, compound="bottom", hover_color="#EE6B6E", fg_color="#F94449",
+                                                    command=lambda x=id:self.eliminar_torneo(x))
+            self.button_eliminar.grid(row=0, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
 
 
 
@@ -1189,6 +1197,13 @@ class App(customtkinter.CTk):
         self.bd.execute(query)
         self.con.commit()
         self.mostrarEquipos()
+
+    def eliminar_torneo(self, id):
+        if not tkinter.messagebox.askyesno(title="Confirmar acción", message="Seguro deseas eliminar este torneo?"):return
+        query = (f"DELETE FROM torneos WHERE id_torneo = {id}")
+        self.bd.execute(query)
+        self.con.commit()
+        self.mostrarTorneos()
 
     def guardar_torneo(self, nombre, descripcion, tipo, limite):
         query = (f"INSERT INTO torneos VALUES (NULL, '{nombre}', '{descripcion}', '{tipo}', '{limite}', DATE('now'))")
