@@ -45,6 +45,7 @@ class App(customtkinter.CTk):
     def opcion_bd(self):
         nuevoNombre = customtkinter.CTkInputDialog(master=self, text="Ingresa el nombre de la base de datos:", title="Configuracion")
         bd_name = nuevoNombre.get_input()
+        if not bd_name or bd_name == "": return;
         existe = os.path.isfile(bd_name)
         if not existe:
             shutil.copyfile("base.db", bd_name)
@@ -251,9 +252,9 @@ class App(customtkinter.CTk):
                 anio = entry_nac_anio.get()
                 nombre = entry_nombre.get()
                 if (altura=="" or dia=="" or mes=="" or anio=="" or nombre==""):
-                    label_msg.config(text_color="red",text="Error: Debes completar todos los campos")
+                    label_msg.configure(text_color="red",text="Error: Debes completar todos los campos")
                 else:
-                    label_msg.config(text_color="white",text="INGRESAR DATOS DEL JUGADOR")
+                    label_msg.configure(text_color="white",text="INGRESAR DATOS DEL JUGADOR")
                     self.guardar_jugador(nombre, dia, mes, anio, altura)
                     window.destroy()
                 
@@ -304,9 +305,9 @@ class App(customtkinter.CTk):
                 nombre = entry_nombre.get()
                 propietario = entry_propietario.get()
                 if (propietario=="" or nombre==""):
-                    label_msg.config(text_color="red",text="Error: Debes completar todos los campos")
+                    label_msg.configure(text_color="red",text="Error: Debes completar todos los campos")
                 else:
-                    label_msg.config(text_color="white",text="INGRESAR DATOS DEL EQUIPO")
+                    label_msg.configure(text_color="white",text="INGRESAR DATOS DEL EQUIPO")
                     self.guardar_equipo(nombre, propietario)
                     window.destroy()
                 
@@ -379,9 +380,9 @@ class App(customtkinter.CTk):
                 tipo = entry_tipo.get()
                 maximo = entry_maximo.get()
                 if (descripcion=="" or nombre=="" or tipo=="" or maximo==""):
-                    label_msg.config(text_color="red",text="Error: Debes completar todos los campos")
+                    label_msg.configure(text_color="red",text="Error: Debes completar todos los campos")
                 else:
-                    label_msg.config(text_color="white",text="INGRESAR DATOS DEL TORNEO")
+                    label_msg.configure(text_color="white",text="INGRESAR DATOS DEL TORNEO")
                     self.guardar_torneo(nombre, descripcion, tipo, maximo)
                     window.destroy()
                 
