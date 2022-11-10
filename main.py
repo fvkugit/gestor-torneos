@@ -2,10 +2,11 @@ import tkinter
 import tkinter.messagebox
 import customtkinter
 import os
-import sqlite3
-from PIL import Image, ImageTk
-from tkinter import Canvas, Menu
-from datetime import date, datetime
+import sqlite3 # Base de datos
+from PIL import Image, ImageTk # Cargar imagenes
+from tkinter import Canvas, Menu # Crear frame scrolleable con Canvas
+from datetime import datetime # Formato a las fechas
+import shutil # Copiar base de datos default
 
 # DOCUMENTATION CUSTOM TKINTER FROM GITHUB
 # https://github.com/TomSchimansky/CustomTkinter/wiki
@@ -44,9 +45,14 @@ class App(customtkinter.CTk):
     def opcion_bd(self):
         nuevoNombre = customtkinter.CTkInputDialog(master=self, text="Ingresa el nombre de la base de datos:", title="Configuracion")
         bd_name = nuevoNombre.get_input()
+        existe = os.path.isfile(bd_name)
+        if not existe:
+            shutil.copyfile("base.db", bd_name)
         self.con.close()
         self.con = sqlite3.connect(bd_name)
         self.bd = self.con.cursor()
+
+
     def opcion_creditos(self):
         tkinter.messagebox.showinfo(title="Creditos", message="Barral Facundo\nTrabajo Final Programación\nTerciario Urquiza DS 3ro2da")
 
