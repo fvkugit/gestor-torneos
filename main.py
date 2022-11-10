@@ -32,6 +32,7 @@ class App(customtkinter.CTk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         self.config(menu=self.barraMenu)
         self.mostrarBase()
+        self.mostrarInicio()
         self.con = sqlite3.connect(bd_name)
         self.bd = self.con.cursor()
 
@@ -138,15 +139,15 @@ class App(customtkinter.CTk):
         window = self.window
         window.title("Nuevo partido")
         window.iconbitmap("icon.ico")
-        window.geometry("500x800")
+        window.geometry("500x425")
 
         # Custom TKinter resizable method doesnt work.
-        window.maxsize(500,800)
-        window.minsize(500,800)
+        window.maxsize(500,425)
+        window.minsize(500,425)
 
         window.columnconfigure(1, weight=1)
 
-        self.window.label_msg = customtkinter.CTkLabel(window, text="ELIGE EL TORNEO")
+        self.window.label_msg = customtkinter.CTkLabel(window, text="CARGAR DATOS DEL PARTIDO")
         label_msg = self.window.label_msg
         label_msg.grid(column=0, row=0, padx=20, pady=20, columnspan=2)
         
@@ -394,7 +395,7 @@ class App(customtkinter.CTk):
             frm = getattr(self,frame)
             frm.destroy()
     
-        
+    
     def mostrarBase(self):
         # ============ create two frames ============
 
@@ -475,6 +476,18 @@ class App(customtkinter.CTk):
 
 
     # Pantallas
+    def mostrarInicio(self):
+        self.mostrarBase()
+        self.equipo_imagen1 = self.load_image("/logo.png", 400)
+        self.image_label = tkinter.Label(master=self.contenido, image=self.equipo_imagen1, bg="#292929")
+        self.image_label.grid(row=0, column=0, pady=(75,0), padx=20, sticky="nsew")
+        self.titulo = customtkinter.CTkLabel(master=self.contenido,
+                                                    text="Gestor de Torneos",
+                                                    text_font=("Roboto Medium", 48),
+                                                    anchor="center",
+                                                    justify="center")
+        self.titulo.grid(row=1, column=0, pady=50, padx=20, sticky="nsew")
+
     def mostrarTorneos(self):
         self.mostrarBase()
         self.agregar_torneo_imagen = self.load_image("/agregar.png", 20)
@@ -933,31 +946,32 @@ class App(customtkinter.CTk):
     
     def gestionarTorneo(self, id):
         self.mostrarBase()
+        def headerGTorneo():
+            self.contenido.columnconfigure((0,1), weight=1)
 
-        self.contenido.columnconfigure((0,1), weight=1)
-
-        # ============ torneos h ============
-        torneoNombre = self.bd.execute(f"SELECT nombre FROM torneos WHERE id_torneo = {id}")
-        torneoNombre = torneoNombre.fetchall()
-        torneoNombre = torneoNombre[0][0]
-        verPartidos = customtkinter.CTkButton(master=self.contenido,
-                                                    text="PARTIDOS",
-                                                    command=lambda id=1:mostrarPartidos())
-        verPartidos.grid(row=1, column=0, pady=10, padx=20, sticky="nsew")
-        verTabla = customtkinter.CTkButton(master=self.contenido,
-                                                    text="TABLA POSICIONES",
-                                                    command=lambda id=1:mostrarTabla())
-        verTabla.grid(row=1, column=1, pady=10, padx=20, sticky="nsew")
-        titulo = customtkinter.CTkLabel(master=self.contenido,
-                                            text="Gestionar: " + torneoNombre,
-                                            text_font=("Roboto Medium", 22),
-                                            anchor="center",
-                                            justify="center")
-        titulo.grid(row=0, column=0, pady=(20,10), padx=20, columnspan=4, sticky="nsew")
+            # ============ torneos h ============
+            torneoNombre = self.bd.execute(f"SELECT nombre FROM torneos WHERE id_torneo = {id}")
+            torneoNombre = torneoNombre.fetchall()
+            torneoNombre = torneoNombre[0][0]
+            verPartidos = customtkinter.CTkButton(master=self.contenido,
+                                                        text="PARTIDOS",
+                                                        command=lambda id=1:mostrarPartidos())
+            verPartidos.grid(row=1, column=0, pady=10, padx=20, sticky="nsew")
+            verTabla = customtkinter.CTkButton(master=self.contenido,
+                                                        text="TABLA POSICIONES",
+                                                        command=lambda id=1:mostrarTabla())
+            verTabla.grid(row=1, column=1, pady=10, padx=20, sticky="nsew")
+            titulo = customtkinter.CTkLabel(master=self.contenido,
+                                                text="Gestionar: " + torneoNombre,
+                                                text_font=("Roboto Medium", 22),
+                                                anchor="center",
+                                                justify="center")
+            titulo.grid(row=0, column=0, pady=(20,10), padx=20, columnspan=4, sticky="nsew")
+        headerGTorneo()
 
         def mostrarPartidos():
-            self.limpiarFrame("header")
-            self.limpiarFrame("frame_info")
+            self.mostrarBase()
+            headerGTorneo()
             self.header = customtkinter.CTkFrame(master=self.contenido)
             self.header.grid(row=2, column=0, columnspan=2, rowspan=1, pady=(20, 0), padx=20, sticky="nsew")
             self.header.columnconfigure((0,1), weight=1)
@@ -1034,90 +1048,90 @@ class App(customtkinter.CTk):
                                                     corner_radius=10, compound="bottom", border_color="#42AB49", fg_color=("gray84", "gray25"),
                                                     hover_color="#53AB5B", command=lambda x=id:self.agregar_partido_window(x))
             self.button_eliminar.grid(row=0, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
-
+        mostrarPartidos()
         def mostrarTabla():
-            self.limpiarFrame("header")
-            self.limpiarFrame("frame_info")
+            self.mostrarBase()
+            headerGTorneo()
             self.header = customtkinter.CTkFrame(master=self.contenido)
             self.header.grid(row=2, column=0, columnspan=2, rowspan=1, pady=(20, 0), padx=20, sticky="nsew")
-            self.header.columnconfigure(2, weight=1)
+            self.header.columnconfigure((0,1,2,3,4), weight=1)
 
             self.hlabel_1 = customtkinter.CTkLabel(master=self.header,
-                                                        text="X",
+                                                        text="Equipo",
                                                         text_font=("Roboto Medium", -16),
                                                         anchor="w",
                                                         justify="left")
             self.hlabel_1.grid(row=0, column=0, pady=10, padx=20, sticky="w")
             self.hlabel_2 = customtkinter.CTkLabel(master=self.header,
-                                                        text="Tipo",
+                                                        text="Partidos Jugados",
                                                         text_font=("Roboto Medium", -16),
-                                                        anchor="w",
-                                                        justify="left") 
+                                                        anchor="center",
+                                                        justify="center") 
             self.hlabel_2.grid(row=0, column=1, pady=10, padx=20, sticky="w")
             self.hlabel_3 = customtkinter.CTkLabel(master=self.header,
-                                                        text="Accion",
+                                                        text="Partidos Empatados",
+                                                        text_font=("Roboto Medium", -16),
+                                                        anchor="center",
+                                                        justify="center") 
+            self.hlabel_3.grid(row=0, column=2, pady=10, padx=20, sticky="w")
+            self.hlabel_3 = customtkinter.CTkLabel(master=self.header,
+                                                        text="Partidos Ganados",
+                                                        text_font=("Roboto Medium", -16),
+                                                        anchor="center",
+                                                        justify="center") 
+            self.hlabel_3.grid(row=0, column=3, pady=10, padx=20, sticky="w")
+            self.hlabel_4 = customtkinter.CTkLabel(master=self.header,
+                                                        text="Puntos",
                                                         text_font=("Roboto Medium", -16),
                                                         anchor="center",
                                                         justify="center")  
-            self.hlabel_3.grid(row=0, column=2, pady=10, padx=20, sticky="ew")
+            self.hlabel_4.grid(row=0, column=4, pady=10, padx=20, sticky="ew")
             # ============ torneos h ============
 
-            rowCounter = 3
-            rowTorneos = 3
-            idequipo = id
-            torneosLista = self.bd.execute(f"SELECT id_torneo, nombre, tipo FROM torneos_equipos JOIN torneos USING (id_torneo) WHERE id_equipo = {idequipo}")
+            rowTabla = 3
+            tablaLista = self.bd.execute(f"SELECT x.id_equipo, x.nombre, ganados, jugados, IFNULL(empatados, 0) as empatados, ganados*3+IFNULL(empatados, 0) as puntos FROM (SELECT t.id_equipo, e.nombre, count(lista.nombre) as ganados FROM torneos_equipos t LEFT JOIN (SELECT p1.equipo_1, p1.id_partido, e.nombre FROM equipos e LEFT JOIN partidos p1 ON e.id_equipo = p1.equipo_1 WHERE id_torneo = {id} AND marcador_1 > marcador_2 UNION SELECT p2.equipo_2, p2.id_partido, e.nombre FROM equipos e LEFT JOIN partidos p2 ON e.id_equipo = p2.equipo_2 WHERE id_torneo = {id} AND marcador_1 < marcador_2 ) lista  ON lista.equipo_1 = t.id_equipo LEFT JOIN equipos e ON t.id_equipo = e.id_equipo WHERE t.id_torneo = {id}  GROUP BY t.id_equipo  ORDER BY count(lista.nombre) DESC) x  LEFT JOIN  	( SELECT id_equipo, count(*) as jugados FROM partidos p LEFT JOIN equipos e ON (id_equipo = p.equipo_1 OR id_equipo = p.equipo_2) WHERE id_torneo = {id} GROUP BY id_equipo ) y ON x.id_equipo = y.id_equipo LEFT JOIN 	(SELECT id_equipo, count(*) as empatados FROM partidos p  LEFT JOIN equipos e ON (p.equipo_1 = e.id_equipo OR p.equipo_2 = e.id_equipo) WHERE p.marcador_1 = p.marcador_2 AND p.id_torneo = {id} GROUP BY id_equipo) z ON x.id_equipo = z.id_equipo ORDER BY puntos DESC ")
             # asistente = self.con.cursor()
 
-            for torneo in torneosLista:
+            for fila in tablaLista:
                 # ============ tabla fila ============
                 self.frame_info = customtkinter.CTkFrame(master=self.contenido)
-                self.frame_info.grid(row=rowTorneos, column=0, columnspan=1, rowspan=1, pady=(20, 0), padx=20, sticky="nsew")
-                self.frame_info.columnconfigure(4, weight=1)
+                self.frame_info.grid(row=rowTabla, column=0, columnspan=2, rowspan=1, pady=(20, 0), padx=20, sticky="nsew")
+                self.frame_info.columnconfigure((0,1,2,3,4), weight=1)
 
 
                 self.label_1 = customtkinter.CTkLabel(master=self.frame_info,
-                                                            text=torneo[1],
+                                                            text=fila[1],
                                                             text_font=("Roboto Medium", -16),
                                                             anchor="w",
                                                             justify="left")  # font name and size in px
                 self.label_1.grid(row=0, column=0, pady=10, padx=20, sticky="w")
                 self.label_2 = customtkinter.CTkLabel(master=self.frame_info,
-                                                            text=torneo[2],
+                                                            text=fila[3],
                                                             text_font=("Roboto Medium", -16),
-                                                            anchor="w",
+                                                            anchor="center",
                                                             justify="center")  # font name and size in px
                 self.label_2.grid(row=0, column=1, pady=10, padx=20, sticky="w")
-                self.label_3 = customtkinter.CTkButton(master=self.frame_info,
-                                                        text="Eliminar", hover_color="#EE6B6E", fg_color="#F94449",
-                                                        command=lambda id=torneo[0]:self.eliminar_torneo_a_equipo(id, idequipo))
-                self.label_3.grid(row=0, column=4, pady=10, padx=20)
+                self.label_3 = customtkinter.CTkLabel(master=self.frame_info,
+                                                            text=fila[4],
+                                                            text_font=("Roboto Medium", -16),
+                                                            anchor="center",
+                                                            justify="center")  # font name and size in px
+                self.label_3.grid(row=0, column=2, pady=10, padx=20, sticky="w")
+                self.label_4 = customtkinter.CTkLabel(master=self.frame_info,
+                                                            text=fila[2],
+                                                            text_font=("Roboto Medium", -16),
+                                                            anchor="center",
+                                                            justify="center")  # font name and size in px
+                self.label_4.grid(row=0, column=3, pady=10, padx=20, sticky="w")
+                self.label_5 = customtkinter.CTkLabel(master=self.frame_info,
+                                                            text=fila[2]*3+fila[4],
+                                                            text_font=("Roboto Medium", -16),
+                                                            anchor="center",
+                                                            justify="center")  # font name and size in px
+                self.label_5.grid(row=0, column=4, pady=10, padx=20, sticky="ew")
 
-                rowTorneos += 1
+                rowTabla += 1
                 # ============ / tabla fila ============
-            self.frame_info = customtkinter.CTkFrame(master=self.contenido)
-            self.frame_info.grid(row=rowTorneos, column=0, pady=(20, 0), padx=20, sticky="nsew", columnspan=2)
-            self.frame_info.rowconfigure(0, weight=1)
-            self.frame_info.columnconfigure(0, weight=1)
-            self.button_eliminar = customtkinter.CTkButton(master=self.frame_info, text="Agregar torneo", border_width=2,
-                                                    corner_radius=10, compound="bottom", border_color="#42AB49", fg_color=("gray84", "gray25"),
-                                                    hover_color="#53AB5B", command=lambda x=id:self.agregar_torneo(x))
-            self.button_eliminar.grid(row=0, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
-
-        
-
-        
-
-        
-        # self.frame_info = customtkinter.CTkFrame(master=self.contenido)
-        # self.frame_info.grid(row=rowCounter+2, column=0, columnspan=2, rowspan=2, pady=(20, 0), padx=20, sticky="nsew")
-        # self.frame_info.rowconfigure(0, weight=1)
-        # self.frame_info.columnconfigure(0, weight=1)
-        # self.button_eliminar = customtkinter.CTkButton(master=self.frame_info, text="Eliminar este torneo", border_width=2,
-        #                                         corner_radius=10, compound="bottom", border_color="#FF2827", fg_color=("gray84", "gray25"),
-        #                                         hover_color="#FF3230", command=lambda x=id:self.eliminar_equipo(x))
-        # self.button_eliminar.grid(row=0, column=0, columnspan=5, padx=20, pady=10, sticky="nsew")
-
-
 
 
 
